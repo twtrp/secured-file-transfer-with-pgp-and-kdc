@@ -3,6 +3,7 @@ import random
 import sys
 import libnum
 import math
+import os
 from datetime import datetime
 from Crypto.Cipher import AES
 
@@ -19,11 +20,11 @@ def FileToString(file_path):
     with open(file_path, 'r') as file:
         string = file.read()
     return string
-    
+
 def StringToFile(string, output_file_path):
     with open(output_file_path, 'w') as file:
         file.write(string)
-        
+
 def ParseTupleFromString(string):
     return eval(string)
 
@@ -191,3 +192,22 @@ def SendFile(sender, file, recipient):
     PGP_message = str(ByteToBinary(cipherText))+'||'+str(cipherHashBinary)+'||'+str(cipherSSSK)+'||'+str(cipherNonce)
     timestamp = str(datetime.now().strftime('%S-%M-%H-%d-%m-%y'))
     StringToFile(PGP_message, f'user{recipient}/inbox/{sender.capitalize()}_{timestamp}.txt')
+
+def DecryptFile(recipient):
+    folder_path = f'user{recipient}/inbox'
+    for file_name in os.listdir(folder_path):
+        sender = file_name[0]
+        file_path = os.path.join(folder_path, file_name)
+        PGP_message = FileToString(file_path).split('||')
+        PU_sender = ParseTupleFromString(FileToString(f'user{sender}/key/PU_{sender}.txt'))
+        PR_recipient = ParseTupleFromString(FileToString(f'user{recipient}/key/PR_{recipient}.txt'))
+        nonce = RSA_Decrypt(PGP_message[3], PR_recipient[0], PR_recipient[1])
+        print('N: ', BinaryToByte(nonce)[:100],'...',sep='')
+        sssk = BinaryToByte(RSA_Decrypt(PGP_message[2], PR_recipient[0], PR_recipient[1]))
+        print('SSSK: ', BinaryToByte(sssk)[:100],'...',sep='')
+        hashBinary = RSA_Decrypt(PGP_message[1], PU_sender[0], PU_sender[1])
+        print('{hashₛₕₐ₋₁(m)}: ',hashBinary[:100],'...',sep='')
+        fileBinary = DecryptAES(PGP_message[0], BinaryToByte(sssk), BinaryToByte(nonce))
+        print('m: ', fileBinary[:100],'...',sep='')
+
+DecryptFile('B')

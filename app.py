@@ -74,28 +74,28 @@ def GenerateKey(bitsize):
     while gcd(e1, phi) != 1:
         e1 = random.randrange(2, phi)
     d1 = InvModulo(e1, phi)
-    public_key_A = (e1, n)
-    private_key_A = (d1, n)
+    public_key = (e1, n)
+    private_key = (d1, n)
     
-    e2 = random.randrange(2, phi)
-    while gcd(e2, phi) != 1:
-        e2 = random.randrange(2, phi)
-        if e2 == e1:
-            e2 = random.randrange(2, phi)
-    d2 = InvModulo(e2, phi)
-    public_key_B = (e2, n)
-    private_key_B = (d2, n)
+    # e2 = random.randrange(2, phi)
+    # while gcd(e2, phi) != 1:
+    #     e2 = random.randrange(2, phi)
+    #     if e2 == e1:
+    #         e2 = random.randrange(2, phi)
+    # d2 = InvModulo(e2, phi)
+    # public_key_B = (e2, n)
+    # private_key_B = (d2, n)
 
-    e3 = random.randrange(2, phi)
-    while gcd(e3, phi) != 1:
-        e3 = random.randrange(2, phi)
-        if e3 == e2 | e3 == e1:
-            e3 = random.randrange(2, phi)
-    d3 = InvModulo(e3, phi)
-    public_key_C = (e3, n)
-    private_key_C = (d3, n)
+    # e3 = random.randrange(2, phi)
+    # while gcd(e3, phi) != 1:
+    #     e3 = random.randrange(2, phi)
+    #     if e3 == e2 | e3 == e1:
+    #         e3 = random.randrange(2, phi)
+    # d3 = InvModulo(e3, phi)
+    # public_key_C = (e3, n)
+    # private_key_C = (d3, n)
 
-    return public_key_A, private_key_A, public_key_B, private_key_B, public_key_C, private_key_C
+    return public_key, private_key
 
 # --- RSA Encryption
 def Plain_Spliting_Encypt(Binary, n):

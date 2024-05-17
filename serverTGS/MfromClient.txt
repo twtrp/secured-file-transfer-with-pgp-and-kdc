@@ -1,0 +1,1 @@
+[B,msg_B(b'form that has Kc_TGS),NonceB(b'form)],[msg_D(b' form that has A,B),NonceD(b'form)]

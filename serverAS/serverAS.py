@@ -1,17 +1,26 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from clientApp import *
 
-KAS_TGS = ""
+KAS_TGS = b"\xf6\x83\x8a|L\x9e\xca\xc5\xbb'H;\x88+&\x87"
 
+# read password and hash each in specific length as Kc
 with open('UserPassword.txt', 'r') as input_file:
     content1 = input_file.read()
 
 Passwords = content1.strip().split(',')
 Passwords = [Password.strip() for Password in Passwords]
 
-PassA = Hash(Passwords[0])
-PassB = Hash(Passwords[1])
-PassC = Hash(Passwords[2])
+PassA = Hashbit(StringToBinary(Passwords[0]).encode())
+PassB = Hashbit(StringToBinary(Passwords[1]).encode())
+PassC = Hashbit(StringToBinary(Passwords[2]).encode())
 
+print(f"{PassA.encode()}\n")
+print(f"{PassB.encode()}\n")
+print(f"{PassC.encode()}\n")
+
+# load message from Client
 with open('MfromClient.txt', 'r') as input_file:
     content2 = input_file.read()
 
@@ -24,17 +33,28 @@ DesClient = Values[1]
 print(f"A: {Client}")
 print(f"B: {DesClient}")
 
+# generate session key in unicode form, and change it to binarystring
 Kc_TGS = GenerateSSSK(128)
-if Client == "A":
-    MessageA, nonce1 = EncryptAES(Kc_TGS, PassA)
-elif Client == "B":
-    MessageA, nonce1 = EncryptAES(Kc_TGS, PassB)
-elif Client == "C":
-    MessageA, nonce1 = EncryptAES(Kc_TGS, PassC)
-    
-Messageb = Kc_TGS + "," + Client
-MessageB, nonce2 = EncryptAES(Messageb, KAS_TGS)
+print(f"{Kc_TGS}")
+BinaryKc_TGS = ByteToBinary(Kc_TGS)
+print(f"{BinaryKc_TGS}")
 
-Respond_Path = 'C:/Users/HP/Documents/GitHub/hungsecurity/userA/MfromAS.txt'
-with open(Respond_Path, 'w') as output_file:
-    output_file.write(f"{MessageA},{MessageB}")
+# example teset
+Client = "A"
+
+# encryptAES w/ key unicode
+
+# Message A & B and Nonce A & B return as unicode b'#
+if Client == "A":
+    MessageA, NonceA = EncryptAES(BinaryKc_TGS, PassA.encode())
+    print(f"Key = {PassA.encode()}")
+elif Client == "B":
+    MessageA, NonceA = EncryptAES(BinaryKc_TGS, PassB.encode())
+elif Client == "C":
+    MessageA, NonceA = EncryptAES(BinaryKc_TGS, PassC.encode())
+    
+Messageb =  Kc_TGS + b","+ Client.encode()
+MessageB, NonceB = EncryptAES(ByteToBinary(Messageb), KAS_TGS)
+
+with open('../user'+Client+'/MfromAS.txt', 'w') as output_file:
+    output_file.write(f"{MessageA}||{NonceA}||{MessageB}||{NonceB}")
