@@ -19,10 +19,23 @@ n_B = Keys[3]
 PU_C = Keys[4]
 n_C = Keys[5]
 # PU_C and n_C is copy of B right now
+# PU_A (Public Key for User A): 10918241545458707164346272246022548841
+# n_A (Parameter for User A): 228228880681173030506413887301289747929
+# PU_B (Public Key for User B): 66564982146357233858268702965596204459
+# n_B (Parameter for User B): 172802230835666172654130396562467429321
+# PU_C (Public Key for User C): 66564982146357233858268702965596204459
+# n_C (Parameter for User C): 172802230835666172654130396562467429321
 
 # load message from Client
 with open('MfromClient.txt', 'r') as input_file:
     content2 = input_file.read().strip()
+# Message C:
+# Destination: 01000010 (Binary representation of 'B')
+# Message B: 001101110001010011011010000000010000000010011100110011111111110001011010111010011001000011110011111110010101101000110010100110001011101101010101
+# Nonce B: 10010011110101100101001000111001110101100011000101100000101111011001010111011000001111110001111011101000111011000111110011011010
+# Message D:
+# Encrypted Message: 110001011001011011000001
+# Nonce D: 01101001000010101111011111110001010010111000101101001110111100101110100111000110110000010011011001111000010010100110000001101010
 
 # Splitting MessageC and MessageD
 Messages = content2.strip().split('||')
@@ -35,6 +48,17 @@ NonceB = BinaryToByte(Messages[2].strip())
 MessageD = BinaryToByte(Messages[3].strip())
 NonceD = BinaryToByte(Messages[4].strip())
 
+# print(Destination)
+# print(MessageB)
+# print(NonceB)
+# print(MessageD)
+# print(NonceD)
+# B
+# b'7\x14\xda\x01\x00\x9c\xcf\xfcZ\xe9\x90\xf3\xf9Z2\x98\xbbU'
+# b'\x93\xd6R9\xd61`\xbd\x95\xd8?\x1e\xe8\xec|\xda'
+# b'\xc5\x96\xc1'
+# b'i\n\xf7\xf1K\x8bN\xf2\xe9\xc6\xc16xJ`j'
+
 # Decrypt and Split MessageB
 print(f"{NonceB}")
 print(f"{MessageB}")
@@ -43,6 +67,7 @@ ByteContentB = BinaryToByte(ContentB)
 print(f"ContentB = {ByteContentB}")
 MessageB_parts = ByteContentB.strip().split(',')
 
+"""
 Kc_TGS = MessageB_parts[0].strip()
 print(f"Kc = {BinaryToByte(StringToBinary(Kc_TGS))}")
 ClientSourceAS = MessageB_parts[1].strip()
@@ -87,3 +112,5 @@ with open(output_file_path, 'w') as output_file:
     output_file.write(f"{ByteToBinary(MessageF)}")
 
 print(f"Response written to {output_file_path}")
+
+"""
