@@ -27,14 +27,14 @@ def GenerateSSSK(bitLen):
     key = randint.to_bytes(byteLen, byteorder='big')
     return key
 
-def EncryptAES(plainTextBit, sssk):
+def EncryptAES(plainTextBit, key):
     plainTextByte = int(plainTextBit, 2).to_bytes((len(plainTextBit) + 7) // 8, byteorder='big')
-    cipher = AES.new(sssk, AES.MODE_EAX)
+    cipher = AES.new(key, AES.MODE_EAX)
     nonce = cipher.nonce
     cipherText = cipher.encrypt(plainTextByte)
     return cipherText, nonce
 
-def DecryptAES(cipherText, sssk, nonce):
-    cipher = AES.new(sssk, AES.MODE_EAX, nonce=nonce)
+def DecryptAES(cipherText, key, nonce):
+    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
     plainText = ToBinaryString(cipher.decrypt(cipherText))
     return plainText
