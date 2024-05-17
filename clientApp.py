@@ -3,6 +3,7 @@ import random
 import sys
 import libnum
 import math
+import os
 from datetime import datetime
 from Crypto.Cipher import AES
 
@@ -35,21 +36,30 @@ def Hashbit(binary):
     byte_hash = hash_value[:32] 
     return byte_hash
 
-def HashToBinary(hash_digest):
+def HashToByte(hash_digest):
     hash_bytes = bytes.fromhex(hash_digest)
     return hash_bytes
 
 def ByteToBinary(binary_data):
     return ''.join(format(byte, '08b') for byte in binary_data)
 
-def StringToBinary(string):
-    return ''.join(format(ord(char), '08b') for char in string)
-
 def BinaryToByte(binary_string):
     byte_data = [binary_string[i:i+8] for i in range(0, len(binary_string), 8)]
     int_data = [int(byte, 2) for byte in byte_data]
     byte_string = bytes(int_data)
     return byte_string
+
+def StringToBinary(string):
+    return ''.join(format(ord(char), '08b') for char in string)
+
+def BinaryToString(binary):
+    if len(binary) % 8 != 0:
+        raise ValueError("Binary string length must be a multiple of 8")
+    if any(char not in '01' for char in binary):
+        raise ValueError("Binary string must contain only '0' or '1'")
+    bytes = [binary[i:i+8] for i in range(0, len(binary), 8)]
+    text = "".join([chr(int(byte, 2)) for byte in bytes])
+    return text
 
 def GenerateSSSK(bitLen):
     byteLen = bitLen // 8 
@@ -166,28 +176,60 @@ def RSA_Decrypt(Message, Key, n):
     Message = Binary_Sequence[:Last_One_Index] #from 0 to (Last_One_Index-1)th bit ไม่นับตัวเอง
     return Message
 
-def SendFile(sender, file, recipient):
-    filePath = 'user'+sender+'/source/'+file
-    fileBinary = FileToBinary(filePath)
-    print('m: ',ByteToBinary(fileBinary)[:100],'...',sep='')
-    sssk = GenerateSSSK(128)
-    print('SSSK: ',ByteToBinary(sssk)[:100],'...',sep='')
-    cipherText, nonce = EncryptAES(ByteToBinary(fileBinary), sssk)
-    print('{m}ₛₛₛₖ:',ByteToBinary(cipherText)[:100],'...',sep='')
-    print('N: ',ByteToBinary(nonce)[:100],'...',sep='')
-    hashDigest = Hash(fileBinary)
-    hashBinary = ByteToBinary(HashToBinary(hashDigest))
-    print('{hashₛₕₐ₋₁(m)}: ',hashBinary[:100],'...',sep='')
-    PR_S = ParseTupleFromString(FileToString('user'+sender+'/key/PR_'+sender+'.txt'))
-    print('PR_S: ',PR_S)
-    PU_R = ParseTupleFromString(FileToString('user'+recipient+'/key/PU_'+recipient+'.txt'))
-    print('PU_R: ',PU_R)
-    cipherHashBinary = RSA_Encrypt(hashBinary, PR_S[0], PR_S[1])
-    print('{hashₛₕₐ₋₁(m)}ₚᵣₛ: ',cipherHashBinary[:100],'...',sep='')
-    cipherSSSK = RSA_Encrypt(ByteToBinary(sssk), PU_R[0], PU_R[1])
-    print('{SSSK}ₚᵤᵣ: ',cipherSSSK[:100],'...',sep='')
-    cipherNonce = RSA_Encrypt(ByteToBinary(nonce), PU_R[0], PU_R[1])
-    print('{N}ₚᵤᵣ: ',cipherNonce[:100],'...',sep='')
-    PGP_message = str(ByteToBinary(cipherText))+'||'+str(cipherHashBinary)+'||'+str(cipherSSSK)+'||'+str(cipherNonce)
-    timestamp = str(datetime.now().strftime('%S-%M-%H-%d-%m-%y'))
-    StringToFile(PGP_message, f'user{recipient}/inbox/{sender.capitalize()}_{timestamp}.txt')
+def SendFile(sender, recipient):
+    folder_path = f'user{sender}/outbox'
+    i = 1
+    for file_name in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, file_name)
+        fileBinary = FileToBinary(file_path)
+        print('m: ',ByteToBinary(fileBinary)[:100],'...',sep='')
+        sssk = GenerateSSSK(128)
+        print('SSSK: ',ByteToBinary(sssk)[:100],'...',sep='')
+        cipherText, nonce = EncryptAES(ByteToBinary(fileBinary), sssk)
+        print('{m}ₛₛₛₖ:',ByteToBinary(cipherText)[:100],'...',sep='')
+        print('N: ',ByteToBinary(nonce)[:100],'...',sep='')
+        hashDigest = Hash(fileBinary)
+        hashBinary = ByteToBinary(HashToByte(hashDigest))
+        print('{hashₛₕₐ₋₁(m)}: ',hashBinary[:100],'...',sep='')
+        PR_S = ParseTupleFromString(FileToString('user'+sender+'/key/PR_'+sender+'.txt'))
+        print('PR_S: ',PR_S)
+        PU_R = ParseTupleFromString(FileToString('user'+recipient+'/key/PU_'+recipient+'.txt'))
+        print('PU_R: ',PU_R)
+        cipherHashBinary = RSA_Encrypt(hashBinary, PR_S[0], PR_S[1])
+        print('{hashₛₕₐ₋₁(m)}ₚᵣ_ₛ: ',cipherHashBinary[:100],'...',sep='')
+        cipherSSSK = RSA_Encrypt(ByteToBinary(sssk), PU_R[0], PU_R[1])
+        print('{SSSK}ₚᵤ_ᵣ: ',cipherSSSK[:100],'...',sep='')
+        cipherNonce = RSA_Encrypt(ByteToBinary(nonce), PU_R[0], PU_R[1])
+        print('{N}ₚᵤ_ᵣ: ',cipherNonce[:100],'...',sep='')
+        fileName = StringToBinary(os.path.basename(file_path))
+        print('name: ',fileName[:100],'...',sep='')
+        cipherName = RSA_Encrypt(fileName, PU_R[0], PU_R[1])
+        print('{name}ₚᵤ_ᵣ: ',cipherNonce[:100],'...',sep='')
+        PGP_message = str(ByteToBinary(cipherText))+'||'+str(cipherHashBinary)+'||'+str(cipherSSSK)+'||'+str(cipherNonce)+'||'+str(cipherName)
+        timestamp = str(datetime.now().strftime('%S-%M-%H-%d-%m-%y'))
+        StringToFile(PGP_message, f'user{recipient}/inbox/{sender.capitalize()}_{i}_{timestamp}.txt')
+        i += 1
+
+def DecryptFile(recipient):
+    folder_path = f'user{recipient}/inbox'
+    for file_name in os.listdir(folder_path):
+        sender = file_name[0]
+        file_path = os.path.join(folder_path, file_name)
+        PGP_message = FileToString(file_path).split('||')
+        PU_sender = ParseTupleFromString(FileToString(f'user{sender}/key/PU_{sender}.txt'))
+        PR_recipient = ParseTupleFromString(FileToString(f'user{recipient}/key/PR_{recipient}.txt'))
+        fileName = RSA_Decrypt(PGP_message[4], PR_recipient[0], PR_recipient[1])
+        print('name: ', fileName[:100],'...',sep='')
+        nonce = RSA_Decrypt(PGP_message[3], PR_recipient[0], PR_recipient[1])
+        print('N: ', nonce[:100],'...',sep='')
+        sssk = RSA_Decrypt(PGP_message[2], PR_recipient[0], PR_recipient[1])
+        print('SSSK: ', sssk[:100],'...',sep='')
+        hashBinary = RSA_Decrypt(PGP_message[1], PU_sender[0], PU_sender[1])
+        print('{hashₛₕₐ₋₁(m)}: ',hashBinary[:100],'...',sep='')
+        fileBinary = DecryptAES(BinaryToByte(PGP_message[0]), BinaryToByte(sssk), BinaryToByte(nonce))
+        print('m: ', fileBinary[:100],'...',sep='')
+        hashDigest = Hash(BinaryToByte(fileBinary))
+        hashM = ByteToBinary(HashToByte(hashDigest))
+        if hashM == hashBinary:
+            BinaryToFile(BinaryToByte(fileBinary),f'user{recipient}/files/{BinaryToString(fileName)}')
+        os.remove(file_path)

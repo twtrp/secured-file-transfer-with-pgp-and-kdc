@@ -8,14 +8,14 @@ def Test(oldFilePath, newFilePath):
     fileBinary = FileToBinary(filePath)
     print('Binary Data: ',ByteToBinary(fileBinary)[:100],'...',sep='')
     hashDigest = Hash(fileBinary)
-    hashBinary = HashToBinary(hashDigest)
+    hashBinary = HashToByte(hashDigest)
     print('Hashed Data: ',ByteToBinary(hashBinary)[:100],'...',sep='')
     BinaryToFile(fileBinary, 'recreated/'+newFilePath)
     newFilePath = 'recreated/'+newFilePath
     newFileBinary = FileToBinary(newFilePath)
     print('Recreated Binary Data: ',ByteToBinary(newFileBinary)[:100],'...',sep='')
     newHashDigest = Hash(newFileBinary)
-    newHashBinary = HashToBinary(newHashDigest)
+    newHashBinary = HashToByte(newHashDigest)
     print('Recreated Hashed Data: ',ByteToBinary(newHashBinary)[:100],'...',sep='')
 
 fileName = sys.argv[1]

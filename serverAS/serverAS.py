@@ -56,5 +56,6 @@ elif Client == "C":
 Messageb =  Kc_TGS + b","+ Client.encode()
 MessageB, NonceB = EncryptAES(ByteToBinary(Messageb), KAS_TGS)
 
+print(f"{ByteToBinary(MessageA)}||{ByteToBinary(NonceA)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}")
 with open('../user'+Client+'/MfromAS.txt', 'w') as output_file:
-    output_file.write(f"{MessageA}||{NonceA}||{MessageB}||{NonceB}")
+    output_file.write(f"{ByteToBinary(MessageA)}||{ByteToBinary(NonceA)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}")

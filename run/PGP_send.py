@@ -15,7 +15,7 @@ def encrypt_and_write_message(sender, recipient, message):
     collect message from ../userA/source/image.png
     FileToBinary(file_path): (from root/clientApp2.py)
     Hash(binary): (from root/clientApp2.py)
-    HashToBinary(hash_digest): (from root/clientApp2.py)
+    HashToByte(hash_digest): (from root/clientApp2.py)
     ByteToBinary(binary_data): (from root/clientApp2.py)
     """
 
@@ -29,7 +29,7 @@ def encrypt_and_write_message(sender, recipient, message):
     message_hash = Hash(message_binary)
 
     # Convert hash to binary and encrypt it with sender's private key
-    encrypted_hash = RSA_Encrypt(ByteToBinary(HashToBinary(message_hash)), sender_private_key[0], sender_private_key[1])
+    encrypted_hash = RSA_Encrypt(ByteToBinary(HashToByte(message_hash)), sender_private_key[0], sender_private_key[1])
 
     # Encrypt the SSSK using recipient's public key
     encrypted_sssk = RSA_Encrypt(ByteToBinary(sssk), recipient_public_key[0], recipient_public_key[1])

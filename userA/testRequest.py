@@ -19,27 +19,26 @@ with open('MfromAS.txt', 'r', encoding=None) as input_file:
 Messages = content1.strip().split('||')
 Messages = [Message.strip() for Message in Messages]
 print(f"Messages = {Messages}\n")
-MessageA = Messages[0][2:-1]
-NonceA = Messages[1][2:-1]
-MessageB = Messages[2][2:-1]
-NonceB = Messages[3][2:-1]
-MessageC = "B," + MessageB
-print(f"MessageC = {MessageC}\n")
+MessageA = BinaryToByte(Messages[0])
+NonceA = BinaryToByte(Messages[1])
+MessageB = BinaryToByte(Messages[2])
+NonceB = BinaryToByte(Messages[3])
 print(f"MessageA = {MessageA}\n")
-print(f"MessageA = {NonceA.encode()}\n")
+print(f"NonceA = {NonceA}\n")
 
 # --- Decrypt messageA
 Passwordhash = Hashbit(StringToBinary(Password).encode())
-print(f"MessageA = {Passwordhash.encode()}\n")
-Kc_TGS = DecryptAES(MessageA.encode(), Passwordhash.encode(), NonceA.encode())
+print(f"KeyA = {Passwordhash.encode}\n")
+Kc_TGS = DecryptAES(MessageA, Passwordhash.encode(), NonceA)
 print(f"Kc_TGS = {Kc_TGS}")
 print(f"Kc_TGS = {BinaryToByte(Kc_TGS)}")
 Messaged = "A," + Destination
 MessageD, NonceD = EncryptAES(StringToBinary(Messaged), BinaryToByte(Kc_TGS))
 
+print(f"{StringToBinary(Destination)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}||{ByteToBinary(MessageD)}||{ByteToBinary(NonceD)}")
 print("Sending Request to TGS please wait")
 with open('../serverTGS/MfromClient.txt', 'w') as output_file:
-    output_file.write(f"{MessageC},{NonceB},{MessageD},{NonceD}")
+    output_file.write(f"{StringToBinary(Destination)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}||{ByteToBinary(MessageD)}||{ByteToBinary(NonceD)}")
 
 # --- Waitng for serverTGS to respond
 input("Please press Enter to continue...")
