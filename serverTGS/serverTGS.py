@@ -63,20 +63,19 @@ NonceD = BinaryToByte(Messages[4].strip())
 print(f"{NonceB}")
 print(f"{MessageB}")
 ContentB = DecryptAES(MessageB, KAS_TGS, NonceB)
-ByteContentB = BinaryToByte(ContentB)
-print(f"ContentB = {ByteContentB}")
-MessageB_parts = ByteContentB.strip().split(',')
+StringContentB = BinaryToString(ContentB)
+print(f"ContentB = {StringContentB}")
+MessageB_parts = StringContentB.strip().split('||')
 
-"""
-Kc_TGS = MessageB_parts[0].strip()
-print(f"Kc = {BinaryToByte(StringToBinary(Kc_TGS))}")
+Kc_TGS = bytes.fromhex(MessageB_parts[0].strip())
+print(f"Kc = {Kc_TGS}")
 ClientSourceAS = MessageB_parts[1].strip()
 print(f"Client = {ClientSourceAS}\n")
 # Decrypt and Split MessageD
-ContentD = DecryptAES(MessageD , BinaryToByte(StringToBinary(Kc_TGS)), NonceD)
+ContentD = DecryptAES(MessageD , Kc_TGS, NonceD)
 StringContentD = BinaryToString(ContentD)
 print(f"StringD = {StringContentD}")
-MessageD_parts = ContentD.strip().split(',')
+MessageD_parts = StringContentD.strip().split('||')
 
 print(f"{MessageD_parts}")
 ClientSourceTGS = MessageD_parts[0].strip()
@@ -86,6 +85,9 @@ Destination = MessageD_parts[1].strip()
 # ClientSourceAS = A
 # Destination = B
 if ClientSourceTGS != ClientSourceAS:
+    output_file_path = f'../user{ClientSourceAS}/MfromTGS.txt'
+    with open(output_file_path, 'w') as output_file:
+        output_file.write(f"Wrong Password")
     raise ValueError("Wrong Password")
 
 # Determine the public key to use for encryption based on DesClient
@@ -103,14 +105,15 @@ else:
 
 # Encrypt the session key with the appropriate public key
 Messagef = public_key + "||" + n
-MessageF = EncryptAES(StringToBinary(Messagef), Kc_TGS)
+MessageF, NonceF = EncryptAES(StringToBinary(Messagef), Kc_TGS)
 
-# Write the response to the output file for SrcClient
-print(f"{ByteToBinary(MessageF)}")
-output_file_path = f'../user{ClientSourceTGS}/MfromTGS.txt'
+# Write the response to the output file for 
+print(f"MessageF = {MessageF}")
+print(f"NonceF = {NonceF}")
+print(f"{ByteToBinary(MessageF)}||{ByteToBinary(NonceF)}")
+output_file_path = f'../user{ClientSourceAS}/MfromTGS.txt'
 with open(output_file_path, 'w') as output_file:
-    output_file.write(f"{ByteToBinary(MessageF)}")
+    output_file.write(f"{ByteToBinary(MessageF)}||{ByteToBinary(NonceF)}")
 
 print(f"Response written to {output_file_path}")
 
-"""

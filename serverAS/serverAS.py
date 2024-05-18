@@ -9,7 +9,7 @@ KAS_TGS = b"\xf6\x83\x8a|L\x9e\xca\xc5\xbb'H;\x88+&\x87"
 with open('UserPassword.txt', 'r') as input_file:
     content1 = input_file.read()
 
-Passwords = content1.strip().split(',')
+Passwords = content1.strip().split('||')
 Passwords = [Password.strip() for Password in Passwords]
 
 PassA = Hashbit(StringToBinary(Passwords[0]).encode())
@@ -24,7 +24,7 @@ print(f"{PassC.encode()}\n")
 with open('MfromClient.txt', 'r') as input_file:
     content2 = input_file.read()
 
-Values = content2.strip().split(',')
+Values = content2.strip().split('||')
 Values = [Value.strip() for Value in Values]
 
 Client = Values[0]
@@ -39,7 +39,7 @@ print(f"{Kc_TGS}")
 BinaryKc_TGS = ByteToBinary(Kc_TGS)
 print(f"{BinaryKc_TGS}")
 
-# example teset
+# example test
 Client = "A"
 
 # encryptAES w/ key unicode
@@ -53,9 +53,13 @@ elif Client == "B":
 elif Client == "C":
     MessageA, NonceA = EncryptAES(BinaryKc_TGS, PassC.encode())
     
-Messageb =  Kc_TGS + b","+ Client.encode()
-MessageB, NonceB = EncryptAES(ByteToBinary(Messageb), KAS_TGS)
+Messageb =  StringToBinary(Kc_TGS.hex()) + StringToBinary("||")+ StringToBinary(Client)
+MessageB, NonceB = EncryptAES(Messageb, KAS_TGS)
 
+print(f"{Messageb}")
+print(f"{Kc_TGS.hex()}")
+print(f"{bytes.fromhex(Kc_TGS.hex())}")
+print(f"{BinaryToString(Messageb)}")
 print(f"{ByteToBinary(MessageA)}||{ByteToBinary(NonceA)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}")
 with open('../user'+Client+'/MfromAS.txt', 'w') as output_file:
     output_file.write(f"{ByteToBinary(MessageA)}||{ByteToBinary(NonceA)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}")
