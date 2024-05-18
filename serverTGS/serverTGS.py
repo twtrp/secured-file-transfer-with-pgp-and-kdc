@@ -86,30 +86,38 @@ try:
     # Assuming the delimiter is a comma, split the byte content
     parts = ByteContentB.split(b',')
     print(f"Parts after split: {parts}")
+    # Parts after split: [b';', b'\x1b>AK6\n\xb2\xeeca\xd5\xbd\xbc9', b'A']
+    # there is 3 instead of expected 2
+    # Messageb is composed of Kc_TGS, a comma, and the Client identifier.
+    # This means ByteContentB would have the format Kc_TGS,Client, split by commas.
 
     # Ensure we have the expected number of parts
-    if len(parts) != 2:
+    if len(parts) != 3:
         raise ValueError("Unexpected number of parts after splitting ByteContentB.")
     
-    Kc_TGS = parts[0].strip()
-    ClientSourceAS = parts[1].strip()
-
+    AdditionalPart = parts[0].strip() # Handle the third part if needed
+    Kc_TGS = parts[1].strip()
+    ClientSourceAS = parts[2].strip()  
+    print(f"AdditionalPart: {AdditionalPart}")
     print(f"Kc_TGS: {Kc_TGS}")
     print(f"ClientSourceAS: {ClientSourceAS}")
-
-    Kc_TGS_str = Kc_TGS.decode('utf-8')
-    ClientSourceAS_str = ClientSourceAS.decode('utf-8')
+    # AdditionalPart: b';'
+    # Kc_TGS: b'\x1b>AK6\n\xb2\xeeca\xd5\xbd\xbc9'
+    # ClientSourceAS: b'A'
+  
+    AdditionalPart_str = AdditionalPart.decode('utf-8')
+    print(f"AdditionalPart (decoded): {AdditionalPart_str}")
+    Kc_TGS_str = Kc_TGS.decode('utf-8', errors='ignore')
     print(f"Kc_TGS (decoded): {Kc_TGS_str}")
+    ClientSourceAS_str = ClientSourceAS.decode('utf-8')
     print(f"ClientSourceAS (decoded): {ClientSourceAS_str}")
+    # AdditionalPart (decoded): ;
+    # Kc_TGS (decoded): AK6
+    # caս9
+    # ClientSourceAS (decoded): A
 except ValueError as e:
     print(f"Error splitting ByteContentB: {e}")
     raise ValueError("Failed to process ContentB. The data structure might be corrupted or incorrect.")
-
-
-Kc_TGS = MessageB_parts[0].strip()
-print(f"Kc = {BinaryToByte(StringToBinary(Kc_TGS))}")
-ClientSourceAS = MessageB_parts[1].strip()
-print(f"Client = {ClientSourceAS}\n")
 
 # Decrypt and handle MessageD
 """
@@ -157,9 +165,10 @@ print(f"Response written to {output_file_path}")
 
 # Extra Message: Sending PU_A to Destination Client
 # - encrypted w/ new SSSK as Kd_TGS (d=Destinnation)
-"""
+Kd_TGS = GenerateSSSK(128)
+print(f"{Kd_TGS}")
 MessageExtra = PU_A + "||" + n_A
-MessageExtraEncrypted, NonceExtra = EncryptAES(StringToBinary(MessageExtra), BinaryToByte(StringToBinary(Kc_TGS)))
+MessageExtraEncrypted, NonceExtra = EncryptAES(StringToBinary(MessageExtra), Kd_TGS)
 
 # Write the extra message to a file for the destination client
 extra_output_file_path = f'../user{Destination}/MessageExtra.txt'
@@ -167,4 +176,3 @@ with open(extra_output_file_path, 'w') as output_file:
     output_file.write(f"{ByteToBinary(MessageExtraEncrypted)}||{ByteToBinary(NonceExtra)}")
 
 print(f"Extra message written to {extra_output_file_path}")
-"""
