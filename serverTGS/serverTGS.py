@@ -5,7 +5,7 @@ from clientApp import *
 
 KAS_TGS = b"\xf6\x83\x8a|L\x9e\xca\xc5\xbb'H;\x88+&\x87"
 
-# access to everyone's password
+# Access to everyone's password
 with open('UserPublicKey.txt', 'r') as input_file:
     content1 = input_file.read()
 
@@ -26,7 +26,7 @@ n_C = Keys[5]
 # PU_C (Public Key for User C): 66564982146357233858268702965596204459
 # n_C (Parameter for User C): 172802230835666172654130396562467429321
 
-# load message from Client
+# Load message from Client
 with open('MfromClient.txt', 'r') as input_file:
     content2 = input_file.read().strip()
 # Message C:
@@ -39,7 +39,7 @@ with open('MfromClient.txt', 'r') as input_file:
 
 # Splitting MessageC and MessageD
 Messages = content2.strip().split('||')
-if len(Messages) < 2:
+if len(Messages) < 5:
     raise ValueError("MfromClient.txt must contain two messages separated by a comma.")
 
 Destination = BinaryToString(Messages[0].strip())
@@ -59,20 +59,60 @@ NonceD = BinaryToByte(Messages[4].strip())
 # b'\xc5\x96\xc1'
 # b'i\n\xf7\xf1K\x8bN\xf2\xe9\xc6\xc16xJ`j'
 
-# Decrypt and Split MessageB
-print(f"{NonceB}")
-print(f"{MessageB}")
+# Decrypt MessageB and handle it correctly as bytes.
+print(f"Nonce = {NonceB}")
+print(f"MessageB = {MessageB}")
 ContentB = DecryptAES(MessageB, KAS_TGS, NonceB)
+print(f"ContentB = {ContentB}")
 ByteContentB = BinaryToByte(ContentB)
-print(f"ContentB = {ByteContentB}")
-MessageB_parts = ByteContentB.strip().split(',')
+print(f"ฺByteContentB = {ByteContentB}")
+# Print ByteContentB as a hex string for analysis
+print(f"ByteContentB (hex): {ByteContentB.hex()}")
 
+# Decode bytes to a string to parse the actual contents.
+# The issue lies in trying to decode binary data as UTF-8, which isn't always possible. 
 """
+try:
+    MessageB_parts = ByteContentB.decode('utf-8').strip().split(',')
+    print(f"MessageB_parts = {MessageB_parts}")
+except UnicodeDecodeError as e:
+    print(f"Decoding Error: {e}")
+    raise ValueError("Failed to decode ContentB as UTF-8. The data might be corrupted.")
+"""
+# Instead of decoding, let's handle the raw byte content
+# Split ByteContentB based on known structure of the message (assuming it follows a specific pattern)
+# Example: If ByteContentB contains data like Kc_TGS and ClientSourceAS separated by a specific delimiter
+try:
+    # Assuming the delimiter is a comma, split the byte content
+    parts = ByteContentB.split(b',')
+    print(f"Parts after split: {parts}")
+
+    # Ensure we have the expected number of parts
+    if len(parts) != 2:
+        raise ValueError("Unexpected number of parts after splitting ByteContentB.")
+    
+    Kc_TGS = parts[0].strip()
+    ClientSourceAS = parts[1].strip()
+
+    print(f"Kc_TGS: {Kc_TGS}")
+    print(f"ClientSourceAS: {ClientSourceAS}")
+
+    Kc_TGS_str = Kc_TGS.decode('utf-8')
+    ClientSourceAS_str = ClientSourceAS.decode('utf-8')
+    print(f"Kc_TGS (decoded): {Kc_TGS_str}")
+    print(f"ClientSourceAS (decoded): {ClientSourceAS_str}")
+except ValueError as e:
+    print(f"Error splitting ByteContentB: {e}")
+    raise ValueError("Failed to process ContentB. The data structure might be corrupted or incorrect.")
+
+
 Kc_TGS = MessageB_parts[0].strip()
 print(f"Kc = {BinaryToByte(StringToBinary(Kc_TGS))}")
 ClientSourceAS = MessageB_parts[1].strip()
 print(f"Client = {ClientSourceAS}\n")
-# Decrypt and Split MessageD
+
+# Decrypt and handle MessageD
+"""
 ContentD = DecryptAES(MessageD , BinaryToByte(StringToBinary(Kc_TGS)), NonceD)
 StringContentD = BinaryToString(ContentD)
 print(f"StringD = {StringContentD}")
@@ -113,4 +153,18 @@ with open(output_file_path, 'w') as output_file:
 
 print(f"Response written to {output_file_path}")
 
+"""
+
+# Extra Message: Sending PU_A to Destination Client
+# - encrypted w/ new SSSK as Kd_TGS (d=Destinnation)
+"""
+MessageExtra = PU_A + "||" + n_A
+MessageExtraEncrypted, NonceExtra = EncryptAES(StringToBinary(MessageExtra), BinaryToByte(StringToBinary(Kc_TGS)))
+
+# Write the extra message to a file for the destination client
+extra_output_file_path = f'../user{Destination}/MessageExtra.txt'
+with open(extra_output_file_path, 'w') as output_file:
+    output_file.write(f"{ByteToBinary(MessageExtraEncrypted)}||{ByteToBinary(NonceExtra)}")
+
+print(f"Extra message written to {extra_output_file_path}")
 """
