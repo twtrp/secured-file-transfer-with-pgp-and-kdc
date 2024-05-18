@@ -226,7 +226,7 @@ def DecryptFile(recipient, PR_R, n_R, PU_S, n_S):
         hashDigest = Hash(BinaryToByte(file_binary))
         hashM = ByteToBinary(HashToByte(hashDigest))
         if hashM == hash_binary:
-            BinaryToFile(BinaryToByte(file_binary),f'user{recipient}/files/{BinaryToString(file_name)}')
+            BinaryToFile(BinaryToByte(file_binary),f'files/{BinaryToString(file_name)}')
             os.remove(file_path)
 
 def PublicKeyRequest(Sender, Password, Destination):

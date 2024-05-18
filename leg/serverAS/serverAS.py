@@ -39,9 +39,6 @@ print(f"{Kc_TGS}")
 BinaryKc_TGS = ByteToBinary(Kc_TGS)
 print(f"{BinaryKc_TGS}")
 
-# example test
-Client = "A"
-
 # encryptAES w/ key unicode
 
 # Message A & B and Nonce A & B return as unicode b'#
