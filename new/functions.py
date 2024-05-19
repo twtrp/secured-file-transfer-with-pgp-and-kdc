@@ -110,7 +110,7 @@ def DecryptAES(cipher_text, key, nonce):
     return plain_text
 
 def SendFile(sender, recipient, PR_S, n_S, PU_R, n_R):
-    folder_path = f'user{sender}/outbox'
+    folder_path = 'outbox'
     i = 1
     for file_name in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file_name)
@@ -122,29 +122,81 @@ def SendFile(sender, recipient, PR_S, n_S, PU_R, n_R):
         cipher_hash_binary = EncryptRSA(hash_binary, PR_S, n_S)
         cipher_SSSK = EncryptRSA(ByteToBinary(sssk), PU_R, n_R)
         cipher_nonce = EncryptRSA(ByteToBinary(nonce), PU_R, n_R)
-        cipherName = EncryptRSA(file_name, PU_R, n_R)
+        cipherName = EncryptRSA(StringToBinary(file_name), PU_R, n_R)
         PGP_message = str(ByteToBinary(cipher_text))+'||'+str(cipher_hash_binary)+'||'+str(cipher_SSSK)+'||'+str(cipher_nonce)+'||'+str(cipherName)
         timestamp = str(datetime.now().strftime('%S-%M-%H-%d-%m-%y'))
-        StringToFile(PGP_message, f'user{recipient}/inbox/{sender.capitalize()}_{i}_{timestamp}.txt')
+        StringToFile(PGP_message, f'../transmissions/{sender.capitalize()}_{recipient.capitalize()}_{timestamp}_{i}.txt')
         i += 1
 
-def DecryptFile(recipient, PR_R, n_R, PU_S, n_S):
-    folder_path = f'user{recipient}/inbox'
+def DecryptFile(PR_R, n_R, PU_S, n_S):
+    folder_path = 'inbox'
     for file_name in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file_name)
         PGP_message = FileToString(file_path).split('||')
         file_name = DecryptRSA(PGP_message[4], PR_R, n_R)
-        print('name: ', file_name[:100],'...',sep='')
         nonce = DecryptRSA(PGP_message[3], PR_R, n_R)
-        print('N: ', nonce[:100],'...',sep='')
         sssk = DecryptRSA(PGP_message[2], PR_R, n_R)
-        print('SSSK: ', sssk[:100],'...',sep='')
         hash_binary = DecryptRSA(PGP_message[1], PU_S, n_S)
-        print('{hashₛₕₐ₋₁(m)}: ',hash_binary[:100],'...',sep='')
         file_binary = DecryptAES(BinaryToByte(PGP_message[0]), BinaryToByte(sssk), BinaryToByte(nonce))
-        print('m: ', file_binary[:100],'...',sep='')
         hashDigest = Hash(BinaryToByte(file_binary))
         hashM = ByteToBinary(HashToByte(hashDigest))
         if hashM == hash_binary:
-            BinaryToFile(BinaryToByte(file_binary),f'user{recipient}/files/{BinaryToString(file_name)}')
+            BinaryToFile(BinaryToByte(file_binary),f'files/{BinaryToString(file_name)}')
             os.remove(file_path)
+
+def PublicKeyRequestold(sender, password, destination):
+    print("Sending Request to AS please wait")
+    StringToFile(f"{sender}||{destination}", '../serverAS/MfromClient.txt')
+    # --- Waitng for serverAS to respond
+    input("Please press Enter to continue...")
+    content1 = FileToString(f'../user{sender}/MfromAS.txt')
+    messages = content1.strip().split('||')
+    messages = [message.strip() for message in messages]
+    # print(f"messages = {messages}\n")
+    message_A = BinaryToByte(messages[0])
+    nonce_A = BinaryToByte(messages[1])
+    message_B = BinaryToByte(messages[2])
+    nonce_B = BinaryToByte(messages[3])
+    # print(f"messageA = {message_A}\n")
+    # print(f"NonceA = {nonce_A}\n")
+    # --- Decrypt messageA
+    password_hash = Hashbit(StringToBinary(password).encode())
+    # print(f"KeyA = {password_hash.encode}\n")
+    Kc_tgs = DecryptAES(message_A, password_hash.encode(), nonce_A)
+    # print(f"Kc_TGS = {Kc_tgs}")
+    # print(f"Kc_TGS = {BinaryToByte(Kc_tgs)}")
+    messaged = sender + "||" + destination
+    message_D, NonceD = EncryptAES(StringToBinary(messaged), BinaryToByte(Kc_tgs))
+    # print(f"{message_D}")
+    # print(f"{StringToBinary(destination)}||{ByteToBinary(message_B)}||{ByteToBinary(nonce_B)}||{ByteToBinary(message_D)}||{ByteToBinary(NonceD)}")
+    print("Sending Request to TGS please wait")
+    StringToFile(f"{StringToBinary(destination)}||{ByteToBinary(message_B)}||{ByteToBinary(nonce_B)}||{ByteToBinary(message_D)}||{ByteToBinary(NonceD)}", '../serverTGS/MfromClient.txt')
+    # --- Waitng for serverTGS to respond
+    input("Please press Enter to continue...")
+    content2 = FileToString(f'../user{sender}/MfromTGS.txt')
+    if content2 == "Wrong password":
+        raise ValueError("Wrong password")
+    message_tgss = content2.strip().split('||')
+    message_tgss = [message_tgs.strip() for message_tgs in message_tgss]
+    # print(f"messages = {message_tgss}\n")
+    messageF = BinaryToByte(message_tgss[0])
+    nonce_F = BinaryToByte(message_tgss[1])
+    # print(f"messageF = {messageF}")
+    # print(f"NonceF = {nonce_F}")
+    # --- Decrypt messageF
+    content_F = DecryptAES(messageF, BinaryToByte(Kc_tgs), nonce_F)
+    # print(f"{BinaryToString(content_F)}")
+    public_keys = BinaryToString(content_F).strip().split('||')
+    public_keys = [value.strip() for value in public_keys]
+    public_key = int(public_keys[0])
+    n = int(public_keys[1])
+    # print(f"Public key of {destination} = {public_key}")
+    # print(f"n of {destination} = {n}")
+    return public_key, n
+
+def PublicKeyRequest(sender, password, recipient):
+    timestamp = str(datetime.now().strftime('%S-%M-%H-%d-%m-%y'))
+    StringToFile(f"{sender}||{recipient}", f'../serverAS/requests/{timestamp}.txt')
+    print('• Sent request to AS')
+    input('■ Press Enter when you receive response from AS in temp folder...')
+    

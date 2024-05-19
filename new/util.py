@@ -54,11 +54,11 @@ def BinaryToString(binary):
     text = "".join([chr(int(byte, 2)) for byte in bytes])
     return text
 
-def DecimalToBinary(Decimal):
-    return "{0:b}".format(int(Decimal))
+def DecimalToBinary(decimal):
+    return "{0:b}".format(int(decimal))
 
-def DecimalToBinarySpecifyBit(Decimal, Bit):
-    return "{0:0{1}b}".format(Decimal, Bit)
+def DecimalToBinarySpecifyBit(decimal, bit):
+    return "{0:0{1}b}".format(decimal, bit)
 
-def BinaryToDecimal(Binary):
-    return int(Binary, 2)
+def BinaryToDecimal(binary):
+    return int(binary, 2)

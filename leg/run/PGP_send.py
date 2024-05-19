@@ -36,7 +36,7 @@ def encrypt_and_write_message(sender, recipient, message):
 
     # Write encrypted message and other information to file in ./file_transmission
     with open(f'./file_transmission/{sender}_to_{recipient}.txt', 'w') as file:
-        file.write(f'Encrypted Message: {encrypted_message}\n')
+        file.write(f'Encrypted message: {encrypted_message}\n')
         file.write(f'Nonce: {nonce}\n')
         file.write(f'Encrypted Hash: {encrypted_hash}\n')
         file.write(f'Encrypted SSSK: {encrypted_sssk}\n')

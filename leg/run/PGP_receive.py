@@ -32,7 +32,7 @@ def decrypt_and_write_message(sender, recipient):
         with open(f'../user{recipient}/inbox/{sender}_to_{recipient}.txt', 'w') as file:
             file.write(decrypted_message)
     else:
-        print("Error: Message integrity verification failed.")
+        print("Error: message integrity verification failed.")
 
 # Main function
 if __name__ == "__main__":

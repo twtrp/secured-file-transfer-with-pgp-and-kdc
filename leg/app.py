@@ -109,8 +109,8 @@ def Plain_Spliting_Encypt(Binary, n):
         result.append("1"+"0"*(Block_Size-1)) # new element appends
     return result, Block_Size
 
-def RSA_Encrypt(Message, Key, n):
-    Result, Block_Size = Plain_Spliting_Encypt(Message, n)
+def RSA_Encrypt(message, Key, n):
+    Result, Block_Size = Plain_Spliting_Encypt(message, n)
     Decimal_Block = [BinaryToDecimal(Binary) for Binary in Result]
     Encrpyt_Decimal_Block = [Modulo(Decimal, Key, n) for Decimal in Decimal_Block]
     # change into form of block_size + 1 bit
@@ -124,17 +124,17 @@ def Plain_Spliting_Decrypt(Binary, n):
     result = [Binary[i:i+Block_Size] for i in range(0, len(Binary), Block_Size)] # separate into each block
     return result, Block_Size
 
-def RSA_Decrypt(Message, Key, n):
-    Result, Block_Size = Plain_Spliting_Decrypt(Message, n)
+def RSA_Decrypt(message, Key, n):
+    Result, Block_Size = Plain_Spliting_Decrypt(message, n)
     Encrpyted_Decimal_Block = [BinaryToDecimal(Binary) for Binary in Result]
     Decimal_Block = [Modulo(Decimal, Key, n) for Decimal in Encrpyted_Decimal_Block]
     Decrypt_Binary_Block = [DecimalToBinarySpecifyBit(Decimal, Block_Size-1) for Decimal in Decimal_Block]
     Binary_Sequence = ''.join(Decrypt_Binary_Block) #join all block
 
     Last_One_Index = Binary_Sequence.rfind("1")
-    Message = Binary_Sequence[:Last_One_Index] #from 0 to (Last_One_Index-1)th bit ไม่นับตัวเอง
+    message = Binary_Sequence[:Last_One_Index] #from 0 to (Last_One_Index-1)th bit ไม่นับตัวเอง
 
-    return Message
+    return message
 
 
 # Example usage:

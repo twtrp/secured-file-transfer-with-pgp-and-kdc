@@ -152,8 +152,8 @@ def Plain_Spliting_Encrypt(Binary, n):
         result.append("1"+"0"*(Block_Size-1)) # new element appends
     return result, Block_Size
 
-def RSA_Encrypt(Message, Key, n):
-    Result, Block_Size = Plain_Spliting_Encrypt(Message, n)
+def RSA_Encrypt(message, Key, n):
+    Result, Block_Size = Plain_Spliting_Encrypt(message, n)
     Decimal_Block = [BinaryToDecimal(Binary) for Binary in Result]
     Encrpyt_Decimal_Block = [Modulo(Decimal, Key, n) for Decimal in Decimal_Block]
     # change into form of block_size + 1 bit
@@ -166,15 +166,15 @@ def Plain_Spliting_Decrypt(Binary, n):
     result = [Binary[i:i+Block_Size] for i in range(0, len(Binary), Block_Size)] # separate into each block
     return result, Block_Size
 
-def RSA_Decrypt(Message, Key, n):
-    Result, Block_Size = Plain_Spliting_Decrypt(Message, n)
+def RSA_Decrypt(message, Key, n):
+    Result, Block_Size = Plain_Spliting_Decrypt(message, n)
     Encrpyted_Decimal_Block = [BinaryToDecimal(Binary) for Binary in Result]
     Decimal_Block = [Modulo(Decimal, Key, n) for Decimal in Encrpyted_Decimal_Block]
     Decrypt_Binary_Block = [DecimalToBinarySpecifyBit(Decimal, Block_Size-1) for Decimal in Decimal_Block]
     Binary_Sequence = ''.join(Decrypt_Binary_Block) #join all block
     Last_One_Index = Binary_Sequence.rfind("1")
-    Message = Binary_Sequence[:Last_One_Index] #from 0 to (Last_One_Index-1)th bit ไม่นับตัวเอง
-    return Message
+    message = Binary_Sequence[:Last_One_Index] #from 0 to (Last_One_Index-1)th bit ไม่นับตัวเอง
+    return message
 
 def SendFile(sender, recipient, PR_S, PU_R, n_S, n_R):
     folder_path = 'outbox'
@@ -240,30 +240,30 @@ def PublicKeyRequest(Sender, Password, Destination):
     with open('../user'+Sender+'/MfromAS.txt', 'r') as input_file:
         content1 = input_file.read()
         
-    Messages = content1.strip().split('||')
-    Messages = [Message.strip() for Message in Messages]
-    print(f"Messages = {Messages}\n")
-    MessageA = BinaryToByte(Messages[0])
-    NonceA = BinaryToByte(Messages[1])
-    MessageB = BinaryToByte(Messages[2])
-    NonceB = BinaryToByte(Messages[3])
-    print(f"MessageA = {MessageA}\n")
+    messages = content1.strip().split('||')
+    messages = [message.strip() for message in messages]
+    print(f"messages = {messages}\n")
+    messageA = BinaryToByte(messages[0])
+    NonceA = BinaryToByte(messages[1])
+    messageB = BinaryToByte(messages[2])
+    NonceB = BinaryToByte(messages[3])
+    print(f"messageA = {messageA}\n")
     print(f"NonceA = {NonceA}\n")
 
     # --- Decrypt messageA
     Passwordhash = Hashbit(StringToBinary(Password).encode())
     print(f"KeyA = {Passwordhash.encode}\n")
-    Kc_TGS = DecryptAES(MessageA, Passwordhash.encode(), NonceA)
+    Kc_TGS = DecryptAES(messageA, Passwordhash.encode(), NonceA)
     print(f"Kc_TGS = {Kc_TGS}")
     print(f"Kc_TGS = {BinaryToByte(Kc_TGS)}")
-    Messaged = Sender + "||" + Destination
-    MessageD, NonceD = EncryptAES(StringToBinary(Messaged), BinaryToByte(Kc_TGS))
+    messaged = Sender + "||" + Destination
+    messageD, NonceD = EncryptAES(StringToBinary(messaged), BinaryToByte(Kc_TGS))
 
-    print(f"{MessageD}")
-    print(f"{StringToBinary(Destination)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}||{ByteToBinary(MessageD)}||{ByteToBinary(NonceD)}")
+    print(f"{messageD}")
+    print(f"{StringToBinary(Destination)}||{ByteToBinary(messageB)}||{ByteToBinary(NonceB)}||{ByteToBinary(messageD)}||{ByteToBinary(NonceD)}")
     print("Sending Request to TGS please wait")
     with open('../serverTGS/MfromClient.txt', 'w') as output_file:
-        output_file.write(f"{StringToBinary(Destination)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}||{ByteToBinary(MessageD)}||{ByteToBinary(NonceD)}")
+        output_file.write(f"{StringToBinary(Destination)}||{ByteToBinary(messageB)}||{ByteToBinary(NonceB)}||{ByteToBinary(messageD)}||{ByteToBinary(NonceD)}")
 
     # --- Waitng for serverTGS to respond
     input("Please press Enter to continue...")
@@ -274,16 +274,16 @@ def PublicKeyRequest(Sender, Password, Destination):
     if content2 == "Wrong Password":
         raise ValueError("Wrong Password")
 
-    Messagetgss = content2.strip().split('||')
-    Messagetgss = [Messagetgs.strip() for Messagetgs in Messagetgss]
-    print(f"Messages = {Messagetgss}\n")
-    MessageF = BinaryToByte(Messagetgss[0])
-    NonceF = BinaryToByte(Messagetgss[1])
-    print(f"MessageF = {MessageF}")
+    messagetgss = content2.strip().split('||')
+    messagetgss = [messagetgs.strip() for messagetgs in messagetgss]
+    print(f"messages = {messagetgss}\n")
+    messageF = BinaryToByte(messagetgss[0])
+    NonceF = BinaryToByte(messagetgss[1])
+    print(f"messageF = {messageF}")
     print(f"NonceF = {NonceF}")
 
-    # --- Decrypt MessageF
-    ContentF = DecryptAES(MessageF, BinaryToByte(Kc_TGS), NonceF)
+    # --- Decrypt messageF
+    ContentF = DecryptAES(messageF, BinaryToByte(Kc_TGS), NonceF)
     print(f"{BinaryToString(ContentF)}")
     Public_Keys = BinaryToString(ContentF).strip().split('||')
     Public_Keys = [value.strip() for value in Public_Keys]

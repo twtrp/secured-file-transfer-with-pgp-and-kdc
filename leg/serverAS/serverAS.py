@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from clientApp import *
 
-KAS_TGS = b"\xf6\x83\x8a|L\x9e\xca\xc5\xbb'H;\x88+&\x87"
+Kas_tgs = b"\xf6\x83\x8a|L\x9e\xca\xc5\xbb'H;\x88+&\x87"
 
 # read password and hash each in specific length as Kc
 with open('UserPassword.txt', 'r') as input_file:
@@ -41,22 +41,22 @@ print(f"{BinaryKc_TGS}")
 
 # encryptAES w/ key unicode
 
-# Message A & B and Nonce A & B return as unicode b'#
+# message A & B and Nonce A & B return as unicode b'#
 if Client == "A":
-    MessageA, NonceA = EncryptAES(BinaryKc_TGS, PassA.encode())
+    messageA, NonceA = EncryptAES(BinaryKc_TGS, PassA.encode())
     print(f"Key = {PassA.encode()}")
 elif Client == "B":
-    MessageA, NonceA = EncryptAES(BinaryKc_TGS, PassB.encode())
+    messageA, NonceA = EncryptAES(BinaryKc_TGS, PassB.encode())
 elif Client == "C":
-    MessageA, NonceA = EncryptAES(BinaryKc_TGS, PassC.encode())
+    messageA, NonceA = EncryptAES(BinaryKc_TGS, PassC.encode())
     
-Messageb =  StringToBinary(Kc_TGS.hex()) + StringToBinary("||")+ StringToBinary(Client)
-MessageB, NonceB = EncryptAES(Messageb, KAS_TGS)
+messageb =  StringToBinary(Kc_TGS.hex()) + StringToBinary("||")+ StringToBinary(Client)
+messageB, NonceB = EncryptAES(messageb, Kas_tgs)
 
-print(f"{Messageb}")
+print(f"{messageb}")
 print(f"{Kc_TGS.hex()}")
 print(f"{bytes.fromhex(Kc_TGS.hex())}")
-print(f"{BinaryToString(Messageb)}")
-print(f"{ByteToBinary(MessageA)}||{ByteToBinary(NonceA)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}")
+print(f"{BinaryToString(messageb)}")
+print(f"{ByteToBinary(messageA)}||{ByteToBinary(NonceA)}||{ByteToBinary(messageB)}||{ByteToBinary(NonceB)}")
 with open('../user'+Client+'/MfromAS.txt', 'w') as output_file:
-    output_file.write(f"{ByteToBinary(MessageA)}||{ByteToBinary(NonceA)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}")
+    output_file.write(f"{ByteToBinary(messageA)}||{ByteToBinary(NonceA)}||{ByteToBinary(messageB)}||{ByteToBinary(NonceB)}")

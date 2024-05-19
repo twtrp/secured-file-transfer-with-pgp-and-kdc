@@ -1,24 +1,22 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from clientApp import *
+from functions import *
 
-KAS_TGS = b"\xf6\x83\x8a|L\x9e\xca\xc5\xbb'H;\x88+&\x87"
+Kas_tgs = b"\xf6\x83\x8a|L\x9e\xca\xc5\xbb'H;\x88+&\x87"
 
-# read password and hash each in specific length as Kc
-with open('UserPassword.txt', 'r') as input_file:
-    content1 = input_file.read()
+content1 = FileToString('Userpassword.txt')
 
-Passwords = content1.strip().split('||')
-Passwords = [Password.strip() for Password in Passwords]
+passwords = content1.strip().split('||')
+passwords = [password.strip() for password in passwords]
 
-PassA = Hashbit(StringToBinary(Passwords[0]).encode())
-PassB = Hashbit(StringToBinary(Passwords[1]).encode())
-PassC = Hashbit(StringToBinary(Passwords[2]).encode())
+pass_A = Hashbit(StringToBinary(passwords[0]).encode())
+pass_B = Hashbit(StringToBinary(passwords[1]).encode())
+pass_C = Hashbit(StringToBinary(passwords[2]).encode())
 
-print(f"{PassA.encode()}\n")
-print(f"{PassB.encode()}\n")
-print(f"{PassC.encode()}\n")
+# print(f"{pass_A.encode()}\n")
+# print(f"{pass_B.encode()}\n")
+# print(f"{pass_C.encode()}\n")
 
 # load message from Client
 with open('MfromClient.txt', 'r') as input_file:
@@ -30,36 +28,36 @@ Values = [Value.strip() for Value in Values]
 Client = Values[0]
 DesClient = Values[1]
 
-print(f"A: {Client}")
-print(f"B: {DesClient}")
+# print(f"A: {Client}")
+# print(f"B: {DesClient}")
 
 # generate session key in unicode form, and change it to binarystring
-Kc_TGS = GenerateSSSK(128)
-print(f"{Kc_TGS}")
-BinaryKc_TGS = ByteToBinary(Kc_TGS)
-print(f"{BinaryKc_TGS}")
+Kc_tgs = GenerateKeySSSK(128)
+# print(f"{Kc_tgs}")
+binary_Kc_tgs = ByteToBinary(Kc_tgs)
+# print(f"{binary_Kc_tgs}")
 
 # example test
-Client = "A"
+# Client = "B"
 
 # encryptAES w/ key unicode
 
-# Message A & B and Nonce A & B return as unicode b'#
+# message A & B and Nonce A & B return as unicode b'#
 if Client == "A":
-    MessageA, NonceA = EncryptAES(BinaryKc_TGS, PassA.encode())
-    print(f"Key = {PassA.encode()}")
+    message_A, nonce_A = EncryptAES(binary_Kc_tgs, pass_A.encode())
+    # print(f"Key = {pass_A.encode()}")
 elif Client == "B":
-    MessageA, NonceA = EncryptAES(BinaryKc_TGS, PassB.encode())
+    message_A, nonce_A = EncryptAES(binary_Kc_tgs, pass_B.encode())
 elif Client == "C":
-    MessageA, NonceA = EncryptAES(BinaryKc_TGS, PassC.encode())
+    message_A, nonce_A = EncryptAES(binary_Kc_tgs, pass_C.encode())
     
-Messageb =  StringToBinary(Kc_TGS.hex()) + StringToBinary("||")+ StringToBinary(Client)
-MessageB, NonceB = EncryptAES(Messageb, KAS_TGS)
+messageb =  StringToBinary(Kc_tgs.hex()) + StringToBinary("||")+ StringToBinary(Client)
+message_B, nonce_B = EncryptAES(messageb, Kas_tgs)
 
-print(f"{Messageb}")
-print(f"{Kc_TGS.hex()}")
-print(f"{bytes.fromhex(Kc_TGS.hex())}")
-print(f"{BinaryToString(Messageb)}")
-print(f"{ByteToBinary(MessageA)}||{ByteToBinary(NonceA)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}")
+# print(f"{messageb}")
+# print(f"{Kc_tgs.hex()}")
+# print(f"{bytes.fromhex(Kc_tgs.hex())}")
+# print(f"{BinaryToString(messageb)}")
+# print(f"{ByteToBinary(message_A)}||{ByteToBinary(nonce_A)}||{ByteToBinary(message_B)}||{ByteToBinary(nonce_B)}")
 with open('../user'+Client+'/MfromAS.txt', 'w') as output_file:
-    output_file.write(f"{ByteToBinary(MessageA)}||{ByteToBinary(NonceA)}||{ByteToBinary(MessageB)}||{ByteToBinary(NonceB)}")
+    output_file.write(f"{ByteToBinary(message_A)}||{ByteToBinary(nonce_A)}||{ByteToBinary(message_B)}||{ByteToBinary(nonce_B)}")
