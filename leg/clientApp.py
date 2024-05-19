@@ -177,7 +177,7 @@ def RSA_Decrypt(message, Key, n):
     return message
 
 def SendFile(sender, recipient, PR_S, PU_R, n_S, n_R):
-    folder_path = 'outbox'
+    folder_path = 'filesOut'
     i = 1
     for file_name in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file_name)
@@ -229,7 +229,7 @@ def DecryptFile(recipient, PR_R, n_R, PU_S, n_S):
             BinaryToFile(BinaryToByte(file_binary),f'files/{BinaryToString(file_name)}')
             os.remove(file_path)
 
-def PublicKeyRequest(Sender, Password, Destination):
+def RequestPublicKey(Sender, Password, Destination):
     print("Sending Request to AS please wait")
     with open('../serverAS/MfromClient.txt', 'w') as output_file:
         output_file.write(f"{Sender}||{Destination}")

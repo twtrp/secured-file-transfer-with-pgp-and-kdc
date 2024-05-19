@@ -32,13 +32,13 @@ while work:
     if purpose == "send":
         password = input("Please enter password: ")
         recipient = input("Which user do you want to send file to: ")
-        PU_R, n_R = PublicKeyRequest("A", password, recipient)
+        PU_R, n_R = RequestPublicKey("A", password, recipient)
         SendFile("A", recipient, int(PR_A), int(PU_R), int(n_A), int(n_R))
 
     elif purpose == "read":
         password = input("Please enter password: ")
         sender = input("Which user do you want to send file to: ")
-        PU_S, n_S = PublicKeyRequest("A", password, sender)
+        PU_S, n_S = RequestPublicKey("A", password, sender)
         DecryptFile("A" , int(PR_A), int(n_A), int(PU_S), int(n_S))
 
     elif purpose == "0":

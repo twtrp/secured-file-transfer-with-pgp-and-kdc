@@ -4,8 +4,7 @@ import sys
 import libnum
 import math
 import os
-from datetime import datetime
-from Crypto.Cipher import AES
+from Crypto.Cipher import DES3, AES
 from util import *
 
 def GCD(a, b):
@@ -49,13 +48,11 @@ def GeneratePrimeRSA(bitsize):
 
 def GenerateKeyRSA(bitsize):
     n, p, q, phi = GeneratePrimeRSA(bitsize)
-    e1 = random.randrange(2, phi)
-    while GCD(e1, phi) != 1:
-        e1 = random.randrange(2, phi)
-    d1 = InvModulo(e1, phi)
-    public_key = (e1, n)
-    private_key = (d1, n)
-    return public_key, private_key
+    e = random.randrange(2, phi)
+    while GCD(e, phi) != 1:
+        e = random.randrange(2, phi)
+    d = InvModulo(e, phi)
+    return e, d, n
 
 def PlainSplitingEncrypt(binary, n):
     block_size = math.floor(math.log2(n))
@@ -98,7 +95,7 @@ def GenerateKeySSSK(bit_len):
     return key
 
 def EncryptAES(plain_text_bit, key):
-    plain_text_byte = int(plain_text_bit, 2).to_bytes((len(plain_text_bit) + 7) // 8, byteorder='big')
+    plain_text_byte = BinaryToByte(plain_text_bit)
     cipher = AES.new(key, AES.MODE_EAX)
     nonce = cipher.nonce
     cipher_text = cipher.encrypt(plain_text_byte)
@@ -110,41 +107,57 @@ def DecryptAES(cipher_text, key, nonce):
     return plain_text
 
 def SendFile(sender, recipient, PR_S, n_S, PU_R, n_R):
-    folder_path = 'outbox'
+    folder_path = 'filesOut'
     i = 1
-    for file_name in os.listdir(folder_path):
-        file_path = os.path.join(folder_path, file_name)
-        file_binary = FileToBinary(file_path)
-        sssk = GenerateKeySSSK(128)
-        cipher_text, nonce = EncryptAES(ByteToBinary(file_binary), sssk)
-        hash_digest = Hash(file_binary)
-        hash_binary = ByteToBinary(HashToByte(hash_digest))
-        cipher_hash_binary = EncryptRSA(hash_binary, PR_S, n_S)
-        cipher_SSSK = EncryptRSA(ByteToBinary(sssk), PU_R, n_R)
-        cipher_nonce = EncryptRSA(ByteToBinary(nonce), PU_R, n_R)
-        cipherName = EncryptRSA(StringToBinary(file_name), PU_R, n_R)
-        PGP_message = str(ByteToBinary(cipher_text))+'||'+str(cipher_hash_binary)+'||'+str(cipher_SSSK)+'||'+str(cipher_nonce)+'||'+str(cipherName)
-        timestamp = str(datetime.now().strftime('%S-%M-%H-%d-%m-%y'))
-        StringToFile(PGP_message, f'../transmissions/{sender.capitalize()}_{recipient.capitalize()}_{timestamp}_{i}.txt')
-        i += 1
+    file_list = os.listdir(folder_path)
+    if len(file_list) == 0:
+        input('■ You have no files to send in filesOut folder. Press Enter to continue...')
+    else:
+        for file_name in file_list:
+            file_path = os.path.join(folder_path, file_name)
+            file_binary = FileToBinary(file_path)
+            sssk = GenerateKeySSSK(128)
+            cipher_text, nonce = EncryptAES(ByteToBinary(file_binary), sssk)
+            hash_digest = Hash(file_binary)
+            hash_binary = ByteToBinary(HashToByte(hash_digest))
+            cipher_hash_binary = EncryptRSA(hash_binary, PR_S, n_S)
+            cipher_SSSK = EncryptRSA(ByteToBinary(sssk), PU_R, n_R)
+            cipher_nonce = EncryptRSA(ByteToBinary(nonce), PU_R, n_R)
+            cipherName = EncryptRSA(StringToBinary(file_name), PU_R, n_R)
+            PGP_message = str(ByteToBinary(cipher_text))+'||'+str(cipher_hash_binary)+'||'+str(cipher_SSSK)+'||'+str(cipher_nonce)+'||'+str(cipherName)
+            StringToFile(PGP_message, f'../transmissions/{sender.capitalize()}_{recipient.capitalize()}_{GetTimeStamp()}_{i}.txt')
+            i += 1
+            print(f'• Encrypted and sent {file_name}')
+        input(f'■ Sending complete. Press Enter to continue...')
 
-def DecryptFile(PR_R, n_R, PU_S, n_S):
-    folder_path = 'inbox'
+def DecryptFile(sender, recipient, PR_R, n_R, PU_S, n_S):
+    folder_path = '../transmissions'
+    count = 0
     for file_name in os.listdir(folder_path):
-        file_path = os.path.join(folder_path, file_name)
-        PGP_message = FileToString(file_path).split('||')
-        file_name = DecryptRSA(PGP_message[4], PR_R, n_R)
-        nonce = DecryptRSA(PGP_message[3], PR_R, n_R)
-        sssk = DecryptRSA(PGP_message[2], PR_R, n_R)
-        hash_binary = DecryptRSA(PGP_message[1], PU_S, n_S)
-        file_binary = DecryptAES(BinaryToByte(PGP_message[0]), BinaryToByte(sssk), BinaryToByte(nonce))
-        hashDigest = Hash(BinaryToByte(file_binary))
-        hashM = ByteToBinary(HashToByte(hashDigest))
-        if hashM == hash_binary:
-            BinaryToFile(BinaryToByte(file_binary),f'files/{BinaryToString(file_name)}')
-            os.remove(file_path)
+        if(file_name[0] == sender):
+            if(file_name[2] == recipient):
+                count += 1
+                file_path = os.path.join(folder_path, file_name)
+                PGP_message = FileToString(file_path).split('||')
+                file_name = BinaryToString(DecryptRSA(PGP_message[4], PR_R, n_R))
+                nonce = DecryptRSA(PGP_message[3], PR_R, n_R)
+                sssk = DecryptRSA(PGP_message[2], PR_R, n_R)
+                hash_binary = DecryptRSA(PGP_message[1], PU_S, n_S)
+                file_binary = DecryptAES(BinaryToByte(PGP_message[0]), BinaryToByte(sssk), BinaryToByte(nonce))
+                hashDigest = Hash(BinaryToByte(file_binary))
+                hashM = ByteToBinary(HashToByte(hashDigest))
+                if hashM == hash_binary:
+                    BinaryToFile(BinaryToByte(file_binary),f'files/{file_name}')
+                    print(f'• Successfully decrypted and stored {file_name}')
+                else:
+                    print(f'• Failed to verify integrity of {file_name}')
+                os.remove(file_path)
+    if count == 0:
+        input('■ Your inbox is empty. Press Enter to continue...')
+    else:
+        input('■ All messages received. Press Enter to continue...')
 
-def PublicKeyRequestold(sender, password, destination):
+def RequestPublicKey0(sender, password, destination):
     print("Sending Request to AS please wait")
     StringToFile(f"{sender}||{destination}", '../serverAS/MfromClient.txt')
     # --- Waitng for serverAS to respond
@@ -194,9 +207,60 @@ def PublicKeyRequestold(sender, password, destination):
     # print(f"n of {destination} = {n}")
     return public_key, n
 
-def PublicKeyRequest(sender, password, recipient):
-    timestamp = str(datetime.now().strftime('%S-%M-%H-%d-%m-%y'))
-    StringToFile(f"{sender}||{recipient}", f'../serverAS/requests/{timestamp}.txt')
+def RequestService(sender, password, mode, value):
+    StringToFile(f'{sender}||{mode}||{value}', f'../transmissions/{sender}_AS_{GetTimeStamp()}.txt')
     print('• Sent request to AS')
-    input('■ Press Enter when you receive response from AS in temp folder...')
-    
+    loop = True
+    while loop:
+        input('■ Press Enter after you receive response from AS...')
+        folder_path = '../transmissions'
+        for file_name in os.listdir(folder_path):
+            if(file_name[0:2] == 'AS'):
+                if(file_name[3] == sender):
+                    file_path = os.path.join(folder_path, file_name)
+                    content_AS = FileToString(file_path)
+                    os.remove(file_path)
+                    loop = False
+                else:
+                    print('• Response from AS is not received yet.')
+            else:
+                print('• Response from AS is not received yet.')
+    segment_AS = content_AS.split('||')
+    message_A = segment_AS[0]
+    nonce_A = segment_AS[1]
+    message_B = segment_AS[2]
+    nonce_B = segment_AS[3]
+    password_hash = Hashbit(StringToBinary(password).encode())
+    Kc_tgs = DecryptAES(BinaryToByte(message_A), password_hash.encode(), BinaryToByte(nonce_A))
+    message_C = StringToBinary(f'{mode}||{value}')
+    message_D, nonce_D = EncryptAES(StringToBinary(sender), BinaryToByte(Kc_tgs))
+    StringToFile(f'{message_C}||{message_B}||{nonce_B}||{ByteToBinary(message_D)}||{ByteToBinary(nonce_D)}', f'../transmissions/{sender}_TGS_{GetTimeStamp()}.txt')
+    print('• Sent request to TGS')
+    loop = True
+    while loop:
+        input('■ Press Enter after you receive response from TGS...')
+        folder_path = '../transmissions'
+        for file_name in os.listdir(folder_path):
+            if(file_name[0:3] == 'TGS'):
+                if(file_name[4] == sender):
+                    file_path = os.path.join(folder_path, file_name)
+                    content_TGS = FileToString(file_path)
+                    os.remove(file_path)
+                    loop = False
+                else:
+                    print('• Response from TGS is not received yet.')
+            else:
+                print('• Response from TGS is not received yet.')
+    if content_TGS == 'Denied':
+        return 0, 0
+    else:
+        if mode == '0':
+            segment_TGS = content_TGS.split('||')
+
+        elif mode == '1':
+            if content_TGS == 'Updated':
+                return 1
+                input('■ Your public key has been updated. Press Enter to continue...')
+            else:
+                return 0
+                input('■ Error. Your public key was not updated. Press Enter to continue...')

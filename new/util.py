@@ -1,4 +1,5 @@
 import hashlib
+from datetime import datetime
 
 def StringToTuple(string):
     return eval(string)
@@ -9,7 +10,7 @@ def FileToBinary(file_path):
     return binary_data
 
 def BinaryToFile(binary_data, output_file_path):
-    with open(output_file_path, 'wb') as file:
+    with open(output_file_path, 'wb+') as file:
         file.write(binary_data)
 
 def FileToString(file_path):
@@ -18,7 +19,7 @@ def FileToString(file_path):
     return string
     
 def StringToFile(string, output_file_path):
-    with open(output_file_path, 'w') as file:
+    with open(output_file_path, 'w+') as file:
         file.write(string)
         
 def Hash(binary):
@@ -62,3 +63,6 @@ def DecimalToBinarySpecifyBit(decimal, bit):
 
 def BinaryToDecimal(binary):
     return int(binary, 2)
+
+def GetTimeStamp():
+    return str(datetime.now().strftime('%S-%M-%H-%d-%m-%y'))

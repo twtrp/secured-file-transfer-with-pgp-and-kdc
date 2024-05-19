@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from clientApp import *
 
-def PublicKeyRequest(Sender, Password, Destination):
+def RequestPublicKey(Sender, Password, Destination):
     print("Sending Request to AS please wait")
     with open('../serverAS/MfromClient.txt', 'w') as output_file:
         output_file.write(f"{Sender}||{Destination}")
@@ -72,4 +72,4 @@ def PublicKeyRequest(Sender, Password, Destination):
 # --- Test
 Password = input("Please enter password: ")
 Destination = input("Which user do you want to send file to: ")
-PublicKeyRequest("A", Password, Destination)
+RequestPublicKey("A", Password, Destination)
