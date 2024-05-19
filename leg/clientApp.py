@@ -287,8 +287,8 @@ def PublicKeyRequest(Sender, Password, Destination):
     print(f"{BinaryToString(ContentF)}")
     Public_Keys = BinaryToString(ContentF).strip().split('||')
     Public_Keys = [value.strip() for value in Public_Keys]
-    Public_Key = int(Public_Keys[0])
-    n = int(Public_Keys[1])
+    Public_Key = Public_Keys[0]
+    n = Public_Keys[1]
 
     print(f"Public key of {Destination} = {Public_Key}")
     print(f"n of {Destination} = {n}")
